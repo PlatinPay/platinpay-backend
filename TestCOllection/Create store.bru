@@ -1,0 +1,18 @@
+meta {
+  name: Create store
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:3001/store/create
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "storeName": "test-store",
+    "storeDisplayName": "Test Store"
+  }
+}

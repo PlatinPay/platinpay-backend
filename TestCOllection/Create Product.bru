@@ -1,0 +1,20 @@
+meta {
+  name: Create Product
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://localhost:3001/store/test1234/product/create
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "productName": "x64-diamond",
+    "productDisplayName": "Stack of Diamonds",
+    "price": 2.99,
+    "stock": 3
+  }
+}
