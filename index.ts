@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS products (
     product_id TEXT NOT NULL UNIQUE,
     product_name TEXT NOT NULL UNIQUE,
     product_display_name TEXT NOT NULL,
+    product_description TEXT NOT NULL,
     
     price REAL NOT NULL,
     stock INTEGER NOT NULL DEFAULT -1,
@@ -135,19 +136,21 @@ app.post("/store/create", (req, res) => {
 
 app.post("/store/:id/product/create", (req, res) => {
   const { id: storeId } = req.params;
-  const { productName, productDisplayName, price, stock } = req.body;
+  const { productName, productDisplayName, productDescription, price, stock } =
+    req.body;
 
   try {
     const productId = uuidv4();
 
     const id = db
       .query(
-        "INSERT INTO products (product_id, product_name, product_display_name, price, stock, store_id) VALUES (?, ?, ?, ?, ?, ?)",
+        "INSERT INTO products (product_id, product_name, product_display_name, product_description, price, stock, store_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
       )
       .run(
         productId,
         productName,
         productDisplayName,
+        productDescription,
         price,
         stock,
         storeId,
