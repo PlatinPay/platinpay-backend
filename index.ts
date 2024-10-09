@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS products (
 );
 `);
 
-app.get("/store/get-id/:name", async (req, res) => {
+app.get("/store/by-id/:name", async (req, res) => {
   const { name: storeName } = req.params;
 
   try {
@@ -70,6 +70,8 @@ app.get("/store/get-id/:name", async (req, res) => {
     res
       .status(500)
       .json({ error: "An error occurred while fetching the store." });
+
+    throw error;
   }
 });
 
@@ -93,6 +95,8 @@ app.get("/store/:id/details", async (req, res) => {
     res
       .status(500)
       .json({ error: "An error occurred while fetching the store." });
+
+    throw error;
   }
 });
 
@@ -111,13 +115,17 @@ app.get("/store/:id/products", async (req, res) => {
     res
       .status(500)
       .json({ error: "An error occurred while fetching the products." });
+
+    throw error;
   }
 });
 
 app.post("/store/create", (req, res) => {
   const { storeName, storeDisplayName } = req.body;
 
-  const storeId = "test1234"; // uuidv4();
+  // const storeId = "test1234";
+
+  const storeId = uuidv4();
 
   try {
     const id = db
@@ -126,11 +134,13 @@ app.post("/store/create", (req, res) => {
       )
       .run(storeId, storeName, storeDisplayName).lastInsertRowid;
 
-    res.json({ id });
+    res.json({ storeId });
   } catch (error) {
     res
       .status(500)
       .json({ error: "An error occurred while creating the store." });
+
+    throw error;
   }
 });
 
@@ -156,7 +166,7 @@ app.post("/store/:id/product/create", (req, res) => {
         storeId,
       ).lastInsertRowid;
 
-    res.json({ id });
+    res.json({ productId });
   } catch (error) {
     res
       .status(500)

@@ -1,3 +1,7 @@
+This project is licensed under the [GNU AGPL-3.0](LICENSE) License. See the `LICENSE` file for details.
+
+**DISCLAIMER: This project is currently not ready for production usage. It is a work-in-progress.**
+
 # platinpay-backend
 
 To install dependencies:
