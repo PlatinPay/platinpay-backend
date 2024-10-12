@@ -8,8 +8,10 @@ import type { Request, Response } from "express";
 import { v4 as uuidv4 } from "uuid";
 
 const app = express();
+const cors = require("cors");
 
 app.use(express.json());
+app.use(cors());
 
 const db = new Database("platinpay.sqlite", { create: true });
 
@@ -148,8 +150,14 @@ app.post("/store/create", (req, res) => {
 
 app.post("/store/:id/product/create", (req, res) => {
   const { id: storeId } = req.params;
-  const { productName, productDisplayName, productDescription, price, stock, action } =
-    req.body;
+  const {
+    productName,
+    productDisplayName,
+    productDescription,
+    price,
+    stock,
+    action,
+  } = req.body;
 
   try {
     const productId = uuidv4();
@@ -175,6 +183,77 @@ app.post("/store/:id/product/create", (req, res) => {
       .status(500)
       .json({ error: "An error occurred while creating the product." });
 
+    throw error;
+  }
+});
+
+app.post("/user/checkout", async (req, res) => {
+  const { cart } = req.body;
+
+  if (!cart || !Array.isArray(cart) || cart.length === 0) {
+    return res
+      .status(400)
+      .json({ error: "Invalid cart format or empty cart." });
+  }
+
+  // Extract product IDs from the cart
+  const productIds = cart.map((item) => item.product_id);
+
+  try {
+    // Fetch all product details in a single query using the IN clause
+    const placeholders = productIds.map(() => "?").join(",");
+    const query = `SELECT product_id, product_name, price, action, stock FROM products WHERE product_id IN (${placeholders})`;
+
+    const products = db.query(query).all(...productIds); // Batch fetch
+
+    // if (!products || products.length !== cart.length) {
+    //   return res.status(404).json({ error: "One or more products not found." });
+    // }
+
+    // Merge cart with product details
+    const checkoutActions = cart.map((cartItem) => {
+      const product = products.find(
+        (p) => p.product_id === cartItem.product_id,
+      );
+
+      if (!product) {
+        return null; // Should never happen because we already checked
+      }
+
+      return product.action;
+    });
+
+    console.log(checkoutActions);
+
+    const url = "http://localhost:8081/";
+
+    const data = {
+      playeruuid: "iUnstable0",
+      commands: ["say Hello, {playeruuid}!", ...checkoutActions],
+    };
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      console.log("Response status code:", response.status);
+      const responseBody = await response.text();
+      console.log("Response body:", responseBody);
+    } catch (error) {
+      console.error(`Error sending POST request: ${error}`);
+    }
+
+    res
+      .status(200)
+      .json({ message: "Checkout successful", cart: checkoutActions });
+  } catch (error) {
+    console.error("Error during checkout:", error);
+    res.status(500).json({ error: "An error occurred while checking out." });
     throw error;
   }
 });
