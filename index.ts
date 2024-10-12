@@ -42,6 +42,8 @@ CREATE TABLE IF NOT EXISTS products (
     price REAL NOT NULL,
     stock INTEGER NOT NULL DEFAULT -1,
     
+    action TEXT NOT NULL,
+    
     offsale BOOLEAN NOT NULL DEFAULT TRUE,
     
     store_id TEXT NOT NULL,
@@ -146,7 +148,7 @@ app.post("/store/create", (req, res) => {
 
 app.post("/store/:id/product/create", (req, res) => {
   const { id: storeId } = req.params;
-  const { productName, productDisplayName, productDescription, price, stock } =
+  const { productName, productDisplayName, productDescription, price, stock, action } =
     req.body;
 
   try {
@@ -154,7 +156,7 @@ app.post("/store/:id/product/create", (req, res) => {
 
     const id = db
       .query(
-        "INSERT INTO products (product_id, product_name, product_display_name, product_description, price, stock, store_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO products (product_id, product_name, product_display_name, product_description, price, stock, action, store_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
       )
       .run(
         productId,
@@ -163,6 +165,7 @@ app.post("/store/:id/product/create", (req, res) => {
         productDescription,
         price,
         stock,
+        action,
         storeId,
       ).lastInsertRowid;
 
