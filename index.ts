@@ -10,6 +10,8 @@ import { v4 as uuidv4 } from "uuid";
 const app = express();
 const cors = require("cors");
 
+const axios = require("axios").default;
+
 app.use(express.json());
 app.use(cors());
 
@@ -53,6 +55,14 @@ CREATE TABLE IF NOT EXISTS products (
     FOREIGN KEY (store_id) REFERENCES stores(store_id)
 );
 `);
+
+function addDashesToUUID(uuid: string): string {
+  if (uuid.length !== 32) {
+    throw new Error("Invalid UUID length");
+  }
+
+  return `${uuid.slice(0, 8)}-${uuid.slice(8, 12)}-${uuid.slice(12, 16)}-${uuid.slice(16, 20)}-${uuid.slice(20)}`;
+}
 
 app.get("/store/by-id/:name", async (req, res) => {
   const { name: storeName } = req.params;
@@ -188,7 +198,25 @@ app.post("/store/:id/product/create", (req, res) => {
 });
 
 app.post("/user/checkout", async (req, res) => {
-  const { cart } = req.body;
+  const { ign, cart } = req.body;
+
+  if (!ign) {
+    return res.status(400).json({ error: "Missing IGN." });
+  }
+
+  const playeruuid = await axios
+    .get(`https://api.mojang.com/users/profiles/minecraft/${ign}`)
+    .then((response) => {
+      return addDashesToUUID(response.data.id);
+    })
+    .catch((error) => {
+      console.error(error);
+      return null;
+    });
+
+  if (!playeruuid) {
+    return res.status(404).json({ error: "Player not found." });
+  }
 
   if (!cart || !Array.isArray(cart) || cart.length === 0) {
     return res
@@ -223,14 +251,18 @@ app.post("/user/checkout", async (req, res) => {
       return product.action;
     });
 
-    console.log(checkoutActions);
+    // console.log(checkoutActions);
 
-    const url = "http://localhost:8081/";
+    const url =
+      "http://8d9e-2405-9800-b960-d42f-2d0e-a251-ecb2-600c.ngrok-free.app/";
 
     const data = {
-      playeruuid: "iUnstable0",
+      playeruuid,
       commands: ["say Hello, {playeruuid}!", ...checkoutActions],
     };
+
+    console.log(data);
+    // console.log(["say Hello, {playeruuid}!", ...checkoutActions]);
 
     try {
       const response = await fetch(url, {
