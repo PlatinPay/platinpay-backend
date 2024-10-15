@@ -201,6 +201,25 @@ app.post("/store/:id/product/create", (req, res) => {
   }
 });
 
+app.post("/store/:id/product/delete", (req, res) => {
+  const { id: storeId } = req.params;
+  const { productId } = req.body;
+
+  try {
+    const id = db
+      .query("DELETE FROM products WHERE store_id = ? AND product_id = ?")
+      .run(storeId, productId).lastInsertRowid;
+
+    res.json({ productId });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "An error occurred while deleting the product." });
+
+    throw error;
+  }
+});
+
 app.post("/user/checkout", async (req, res) => {
   const { ign, cart } = req.body;
 
