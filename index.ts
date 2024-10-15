@@ -48,6 +48,8 @@ CREATE TABLE IF NOT EXISTS products (
     
     action TEXT NOT NULL,
     
+    image TEXT NOT NULL DEFAULT "product",
+    
     offsale BOOLEAN NOT NULL DEFAULT TRUE,
     
     store_id TEXT NOT NULL,
@@ -167,6 +169,7 @@ app.post("/store/:id/product/create", (req, res) => {
     price,
     stock,
     action,
+    image,
   } = req.body;
 
   try {
@@ -174,7 +177,7 @@ app.post("/store/:id/product/create", (req, res) => {
 
     const id = db
       .query(
-        "INSERT INTO products (product_id, product_name, product_display_name, product_description, price, stock, action, store_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO products (product_id, product_name, product_display_name, product_description, price, stock, action, image, store_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
       )
       .run(
         productId,
@@ -184,6 +187,7 @@ app.post("/store/:id/product/create", (req, res) => {
         price,
         stock,
         action,
+        image,
         storeId,
       ).lastInsertRowid;
 
@@ -201,7 +205,8 @@ app.post("/user/checkout", async (req, res) => {
   const { ign, cart } = req.body;
 
   if (!ign) {
-    return res.status(400).json({ error: "Missing IGN." });
+    res.status(400).json({ error: "Missing IGN." });
+    return;
   }
 
   const playeruuid = await axios
@@ -211,17 +216,17 @@ app.post("/user/checkout", async (req, res) => {
     })
     .catch((error) => {
       console.error(error);
-      return null;
+      return;
     });
 
   if (!playeruuid) {
-    return res.status(404).json({ error: "Player not found." });
+    res.status(404).json({ error: "Player not found." });
+    return;
   }
 
   if (!cart || !Array.isArray(cart) || cart.length === 0) {
-    return res
-      .status(400)
-      .json({ error: "Invalid cart format or empty cart." });
+    res.status(400).json({ error: "Invalid cart format or empty cart." });
+    return;
   }
 
   // Extract product IDs from the cart
