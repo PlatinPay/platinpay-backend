@@ -1,0 +1,26 @@
+meta {
+  name: Edit Product
+  type: http
+  seq: 7
+}
+
+post {
+  url: http://localhost:3001/store/387bed51-a0c1-43a0-b43c-93c17ce29f3b/product/edit
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "productId": "5059de30-7476-4e4d-885b-364698a45f04",
+    "newData": {
+      "productName": "nether-star",
+      "productDisplayName": "Nether Star",
+      "productDescription": "test",
+      "price": 99.00,
+      "stock": 3,
+      "action": "give {playeruuid} minecraft:nether_star",
+      "image": "nether-star.gif"
+    }
+  }
+}
