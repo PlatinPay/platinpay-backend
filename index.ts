@@ -313,15 +313,14 @@ app.post("/user/checkout", async (req, res) => {
 
     // console.log(checkoutActions);
 
-    const url =
-      "http://249a-2405-9800-b960-d42f-2d0e-a251-ecb2-600c.ngrok-free.app";
+    const url = "http://localhost:8081";
 
     const data = {
       playeruuid,
       commands: [
         "say Hello, {playeruuid}!",
-        "stop",
-        "say Hi!",
+        // "stop",
+        // "say Hi!",
         ...checkoutActions,
       ],
       timestamp: Date.now(),
