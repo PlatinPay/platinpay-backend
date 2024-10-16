@@ -3,12 +3,15 @@ import { fetch } from "bun";
 import { Database } from "bun:sqlite";
 
 import express from "express";
+import cors from "cors";
 import type { Request, Response } from "express";
+import crypto from "node:crypto";
 
 import { v4 as uuidv4 } from "uuid";
 
 const app = express();
-const cors = require("cors");
+
+// const { exec } = require("child_process");
 
 const axios = require("axios").default;
 
@@ -19,11 +22,20 @@ const db = new Database("platinpay.sqlite", { create: true });
 
 // Nuke db
 
+// db.run("DROP TABLE IF EXISTS settings;");
 // db.run("DROP TABLE IF EXISTS stores;");
 // db.run("DROP TABLE IF EXISTS products;");
 
 // Enable foreign key constraints
 db.run("PRAGMA foreign_keys = ON;");
+
+db.run(`
+CREATE TABLE IF NOT EXISTS settings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    key TEXT NOT NULL UNIQUE,
+    value TEXT NOT NULL
+);
+`);
 
 db.run(`
 CREATE TABLE IF NOT EXISTS stores (
@@ -64,6 +76,30 @@ function addDashesToUUID(uuid: string): string {
   }
 
   return `${uuid.slice(0, 8)}-${uuid.slice(8, 12)}-${uuid.slice(12, 16)}-${uuid.slice(16, 20)}-${uuid.slice(20)}`;
+}
+
+function importPrivateKey(base64PrivateKey) {
+  const rawPrivateKey = Buffer.from(base64PrivateKey, "base64");
+  const pkcs8PrivateKey = Buffer.concat([
+    Buffer.from("302e020100300506032b657004220420", "hex"),
+    rawPrivateKey,
+  ]);
+
+  return crypto.createPrivateKey({
+    key: pkcs8PrivateKey,
+    format: "der",
+    type: "pkcs8",
+  });
+}
+
+function importPublicKey(base64PublicKey) {
+  const x509PublicKey = Buffer.from(base64PublicKey, "base64");
+
+  return crypto.createPublicKey({
+    key: x509PublicKey,
+    format: "der",
+    type: "spki",
+  });
 }
 
 app.get("/store/by-id/:name", async (req, res) => {
@@ -278,14 +314,46 @@ app.post("/user/checkout", async (req, res) => {
     // console.log(checkoutActions);
 
     const url =
-      "http://8d9e-2405-9800-b960-d42f-2d0e-a251-ecb2-600c.ngrok-free.app/";
+      "http://249a-2405-9800-b960-d42f-2d0e-a251-ecb2-600c.ngrok-free.app";
 
     const data = {
       playeruuid,
-      commands: ["say Hello, {playeruuid}!", ...checkoutActions],
+      commands: [
+        "say Hello, {playeruuid}!",
+        "stop",
+        "say Hi!",
+        ...checkoutActions,
+      ],
+      timestamp: Date.now(),
     };
 
-    console.log(data);
+    const settings = db
+      .query(
+        "SELECT key, value FROM settings WHERE key IN ('public_key', 'private_key')",
+      )
+      .all();
+    const settingsMap = Object.fromEntries(
+      settings.map((setting) => [setting.key, setting.value]),
+    );
+
+    const base64PrivateKey = settingsMap["private_key"];
+    const base64PublicKey = settingsMap["public_key"];
+
+    const privateKey = importPrivateKey(base64PrivateKey);
+    const publicKey = importPublicKey(base64PublicKey);
+
+    const encodedData = JSON.stringify(data);
+
+    const signature = crypto.sign(null, Buffer.from(encodedData), privateKey);
+
+    const payload = {
+      data,
+      signature: signature.toString("base64"),
+    };
+
+    console.log(payload);
+
+    //
     // console.log(["say Hello, {playeruuid}!", ...checkoutActions]);
 
     try {
@@ -294,7 +362,7 @@ app.post("/user/checkout", async (req, res) => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
 
       console.log("Response status code:", response.status);
@@ -312,6 +380,45 @@ app.post("/user/checkout", async (req, res) => {
     res.status(500).json({ error: "An error occurred while checking out." });
     throw error;
   }
+});
+
+app.post("/genkeypair", async (req, res) => {
+  const { publicKey, privateKey } = await crypto.generateKeyPairSync("ed25519");
+
+  const rawPrivateKey = privateKey
+    .export({
+      format: "der",
+      type: "pkcs8",
+    })
+    .subarray(-32);
+
+  const privateKeyBase64 = Buffer.from(rawPrivateKey).toString("base64");
+
+  const x509PublicKey = publicKey.export({
+    format: "der", // DER format
+    type: "spki", // X.509 SubjectPublicKeyInfo
+  });
+
+  const publicKeyBase64 = Buffer.from(x509PublicKey).toString("base64");
+
+  // console.log("\nPublic Key (Base64 X.509):");
+  // console.log(publicKeyBase64);
+
+  db.transaction(() => {
+    db.query("INSERT INTO settings (key, value) VALUES (?, ?);").run(
+      "public_key",
+      publicKeyBase64,
+    );
+
+    db.query("INSERT INTO settings (key, value) VALUES (?, ?);").run(
+      "private_key",
+      privateKeyBase64,
+    );
+  })();
+
+  res
+    .status(200)
+    .json({ privateKey: privateKeyBase64, publicKey: publicKeyBase64 });
 });
 
 // const url = "http://localhost:8081/";
