@@ -336,8 +336,8 @@ app.post("/user/checkout", async (req, res) => {
     };
 
     const data_2 = {
+      message: `Hello, ${ign}! Your order has been processed.\n\n${cart.map((item) => `${item.product_display_name} (${item.product_name}) - $${item.price}`).join("\n")}\n\nTotal: $${cart.reduce((acc, item) => acc + item.price, 0)}`,
       userID: discordId,
-      message: `Hello, ${ign}! Your order has been processed.\n\n${cart.map((item) => `${item.product_name} - $${item.price}`).join("\n")}\n\nTotal: $${cart.reduce((acc, item) => acc + item.price, 0)}`,
       timestamp: Date.now(),
     };
 
@@ -358,6 +358,8 @@ app.post("/user/checkout", async (req, res) => {
 
     const encodedData = JSON.stringify(data);
     const encodedData_2 = JSON.stringify(data_2);
+
+    console.log(encodedData_2);
 
     const signature = crypto.sign(null, Buffer.from(encodedData), privateKey);
     const signature_2 = crypto.sign(
