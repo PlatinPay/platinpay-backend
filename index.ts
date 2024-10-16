@@ -322,7 +322,7 @@ app.post("/user/checkout", async (req, res) => {
 
     const url = "http://localhost:8081";
 
-    const url_2 = "http://localhost:8082";
+    const url_2 = "http://localhost:8082/dmuser";
 
     const data = {
       playeruuid,
