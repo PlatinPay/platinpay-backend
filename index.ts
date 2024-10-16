@@ -257,10 +257,17 @@ app.post("/store/:id/product/delete", (req, res) => {
 });
 
 app.post("/user/checkout", async (req, res) => {
-  const { ign, cart } = req.body;
+  const { ign, discordId, cart } = req.body;
 
   if (!ign) {
     res.status(400).json({ error: "Missing IGN." });
+    return;
+  }
+
+  if (!discordId) {
+    res.status(400).json({
+      error: "Missing Discord ID.",
+    });
     return;
   }
 
@@ -315,6 +322,8 @@ app.post("/user/checkout", async (req, res) => {
 
     const url = "http://localhost:8081";
 
+    const url_2 = "http://localhost:8082";
+
     const data = {
       playeruuid,
       commands: [
@@ -323,6 +332,12 @@ app.post("/user/checkout", async (req, res) => {
         // "say Hi!",
         ...checkoutActions,
       ],
+      timestamp: Date.now(),
+    };
+
+    const data_2 = {
+      userID: discordId,
+      message: `Hello, ${ign}! Your order has been processed.\n\n${cart.map((item) => `${item.product_name} - $${item.price}`).join("\n")}\n\nTotal: $${cart.reduce((acc, item) => acc + item.price, 0)}`,
       timestamp: Date.now(),
     };
 
@@ -342,15 +357,27 @@ app.post("/user/checkout", async (req, res) => {
     const publicKey = importPublicKey(base64PublicKey);
 
     const encodedData = JSON.stringify(data);
+    const encodedData_2 = JSON.stringify(data_2);
 
     const signature = crypto.sign(null, Buffer.from(encodedData), privateKey);
+    const signature_2 = crypto.sign(
+      null,
+      Buffer.from(encodedData_2),
+      privateKey,
+    );
 
     const payload = {
       data,
       signature: signature.toString("base64"),
     };
 
+    const payload_2 = {
+      data: data_2,
+      signature: signature_2.toString("base64"),
+    };
+
     console.log(payload);
+    console.log(payload_2);
 
     //
     // console.log(["say Hello, {playeruuid}!", ...checkoutActions]);
@@ -364,9 +391,20 @@ app.post("/user/checkout", async (req, res) => {
         body: JSON.stringify(payload),
       });
 
+      const response_2 = await fetch(url_2, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload_2),
+      });
+
       console.log("Response status code:", response.status);
+      console.log("Response status code 2:", response_2.status);
       const responseBody = await response.text();
+      const responseBody_2 = await response_2.text();
       console.log("Response body:", responseBody);
+      console.log("Response body 2:", responseBody_2);
     } catch (error) {
       console.error(`Error sending POST request: ${error}`);
     }
