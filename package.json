@@ -2,6 +2,15 @@
   "name": "platinpay-backend",
   "module": "index.ts",
   "type": "module",
+  "scripts": {
+    "dev": "bun run --hot .",
+    "start": "bun run .",
+    "nuke-settings": "bun run nuke.ts settings",
+    "nuke-main": "bun run nuke.ts main",
+    "nuke": "bun run nuke-main && bun run nuke-settings",
+    "populate": "bun run nuke-main && MODE=test bun run populate.ts",
+    "genkey": "bun run nuke-settings && MODE=test bun run genkey.ts"
+  },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/cors": "^2.8.17",
@@ -14,8 +23,8 @@
   },
   "dependencies": {
     "@iunstable0/server-libs": "^1.2.7",
-    "@tufjs/canonical-json": "^2.0.0",
     "axios": "^1.7.7",
+    "canonicalize": "^2.0.0",
     "cors": "^2.8.5",
     "express": "^4.21.1",
     "uuid": "^10.0.0"

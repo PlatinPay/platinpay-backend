@@ -1,18 +1,15 @@
 import { fetch } from "bun";
-
 import { Database } from "bun:sqlite";
 
-import express from "express";
-import cors from "cors";
-import type { Request, Response } from "express";
 import crypto from "node:crypto";
-import json from "@tufjs/canonical-json";
 
 import { v4 as uuidv4 } from "uuid";
 
-const app = express();
+import express from "express";
+import cors from "cors";
+import canonicalize from "canonicalize";
 
-// const { exec } = require("child_process");
+const app = express();
 
 const axios = require("axios").default;
 
@@ -20,12 +17,6 @@ app.use(express.json());
 app.use(cors());
 
 const db = new Database("platinpay.sqlite", { create: true });
-
-// Nuke db
-
-// db.run("DROP TABLE IF EXISTS settings;");
-// db.run("DROP TABLE IF EXISTS stores;");
-// db.run("DROP TABLE IF EXISTS products;");
 
 // Enable foreign key constraints
 db.run("PRAGMA foreign_keys = ON;");
@@ -337,7 +328,7 @@ app.post("/user/checkout", async (req, res) => {
     };
 
     const data_2 = {
-      message: `Hello, ${ign}! Your order has been processed.\n\n${cart.map((item) => `${item.product_display_name} (${item.product_name}) - $${item.price}`).join("\n")}\n\nTotal: $${cart.reduce((acc, item) => acc + item.price, 0)}`,
+      message: `Hello, ${ign}! Your order has been processed.\n\n${cart.map((item) => `${item.product_display_name} (${item.product_name}) - $${item.price}`).join("\n")}\n\nTotal: $${cart.reduce((acc, item) => acc + item.price, 0)}\n\nThank you for your purchase!`,
       userID: discordId,
       timestamp: Date.now(),
     };
@@ -357,10 +348,13 @@ app.post("/user/checkout", async (req, res) => {
     const privateKey = importPrivateKey(base64PrivateKey);
     const publicKey = importPublicKey(base64PublicKey);
 
-    const encodedData = json.canonicalize(data);
-    const encodedData_2 = json.canonicalize(data_2);
+    const encodedData = canonicalize(data);
+    const encodedData_2 = canonicalize(data_2);
 
     console.log(encodedData_2);
+
+    const newObjectTest = JSON.parse(encodedData_2);
+    console.log("newOJB", newObjectTest);
 
     const signature = crypto.sign(null, Buffer.from(encodedData), privateKey);
     const signature_2 = crypto.sign(
@@ -391,25 +385,30 @@ app.post("/user/checkout", async (req, res) => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: json.canonicalize(payload),
+        body: canonicalize(payload),
       });
 
+      console.log("Response status code:", response.status);
+      const responseBody = await response.text();
+      console.log("Response body:", responseBody);
+    } catch (error) {
+      console.error(`Error sending POST request: ${error}`);
+    }
+
+    try {
       const response_2 = await fetch(url_2, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: json.canonicalize(payload_2),
+        body: canonicalize(payload_2),
       });
 
-      console.log("Response status code:", response.status);
       console.log("Response status code 2:", response_2.status);
-      const responseBody = await response.text();
       const responseBody_2 = await response_2.text();
-      console.log("Response body:", responseBody);
       console.log("Response body 2:", responseBody_2);
     } catch (error) {
-      console.error(`Error sending POST request: ${error}`);
+      console.error(`Error sending POST request 2: ${error}`);
     }
 
     res
@@ -477,7 +476,7 @@ app.post("/genkeypair", async (req, res) => {
 //     headers: {
 //       "Content-Type": "application/json"
 //     },
-//     body: json.canonicalize(data)
+//     body: canonicalize(data)
 //   });
 //
 //   console.log("Response status code:", response.status);
@@ -491,6 +490,10 @@ app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
-app.listen(3001, () => {
-  console.log("Server is running on port 3001");
-});
+if (process.env.MODE !== "test") {
+  app.listen(3001, () => {
+    console.log("Server is running on port 3001");
+  });
+}
+
+export default app;
