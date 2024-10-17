@@ -6,6 +6,7 @@ import express from "express";
 import cors from "cors";
 import type { Request, Response } from "express";
 import crypto from "node:crypto";
+import json from "@tufjs/canonical-json";
 
 import { v4 as uuidv4 } from "uuid";
 
@@ -356,8 +357,8 @@ app.post("/user/checkout", async (req, res) => {
     const privateKey = importPrivateKey(base64PrivateKey);
     const publicKey = importPublicKey(base64PublicKey);
 
-    const encodedData = JSON.stringify(data);
-    const encodedData_2 = JSON.stringify(data_2);
+    const encodedData = json.canonicalize(data);
+    const encodedData_2 = json.canonicalize(data_2);
 
     console.log(encodedData_2);
 
@@ -390,7 +391,7 @@ app.post("/user/checkout", async (req, res) => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload),
+        body: json.canonicalize(payload),
       });
 
       const response_2 = await fetch(url_2, {
@@ -398,7 +399,7 @@ app.post("/user/checkout", async (req, res) => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload_2),
+        body: json.canonicalize(payload_2),
       });
 
       console.log("Response status code:", response.status);
@@ -476,7 +477,7 @@ app.post("/genkeypair", async (req, res) => {
 //     headers: {
 //       "Content-Type": "application/json"
 //     },
-//     body: JSON.stringify(data)
+//     body: json.canonicalize(data)
 //   });
 //
 //   console.log("Response status code:", response.status);
