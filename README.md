@@ -1,3 +1,8 @@
+<p align="center">
+  <img src="https://github.com/PlatinPay/.github/blob/main/horizontal-logo-text-transparent.png?raw=true" alt="PlatinPay's Logo" width="500"/>
+</p>
+<br />
+
 # PlatinPay-Backend
 
 [Find the main README here! (It has a showcase video and deployment links so you can try PlatinPay yourself!)](https://github.com/PlatinPay)
