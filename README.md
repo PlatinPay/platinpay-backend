@@ -63,6 +63,10 @@ bun run start
 
 The backend will run on port 3001 by default, to change that, edit the file `index.ts`
 
+(If you updated the port, make sure to also update it on the frontend)
+
+https://github.com/PlatinPay/platinpay-frontend
+
 7. Update your **PlatinPay-Discord** and **PlatinPay-Minecraft** public key to the one you just generated in step 5
 
 Refer to the docs on how to set your public key for Minecraft and Discord
