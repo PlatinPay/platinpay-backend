@@ -19,7 +19,7 @@ This is the Backend of the PlatinPay project.
 
 # NOTE: Everything is subject to change, this is only a proof-of-concept and definitely not finalized, there are still a lot more features on the roadmap and the backend will also be ported to either Go or Rust
 
-## Prerequesites
+## Prerequisites
 
 Make sure `bun` is installed and up-to-date
 ```bash
